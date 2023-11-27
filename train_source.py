@@ -4,12 +4,11 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision.datasets import MNIST
 from torchvision.transforms import Compose, ToTensor
-import torchvision.models as models
 from tqdm import tqdm
-from data import SVHN
+from data import SVHN, Office31
 
 import config
-from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST
+from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST, Office
 from utils import GrayscaleToRgb, PadSize
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,13 +22,15 @@ def create_dataloaders(batch_size, source, target):
     we use GrayscaleToRgb transform.
     '''
     if target == 'MNIST-M':
-        dataset = MNIST(config.DATA_DIR/'mnist', train=True, download=True,
+        dataset = MNIST('/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data/mnist', train=True, download=True,
                         transform=Compose([GrayscaleToRgb(), ToTensor()]))
     elif target == 'USPS':
-        dataset = MNIST(config.DATA_DIR/'mnist', train=True, download=True,
+        dataset = MNIST('/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data/mnist', train=True, download=True,
                         transform=Compose([ToTensor()]))
     elif source == 'SVHN' and target == 'MNIST':
         dataset = SVHN()
+    elif source == 'amazon' and target == 'webcam':
+        dataset = Office31(domain=source)
     else:
         raise ValueError(f'Invalid target dataset: {target}')
     
@@ -79,9 +80,9 @@ def do_epoch(model, dataloader, criterion, optim=None):
     return mean_loss, mean_accuracy
 
 def main():
-    batch_size = 64
-    source = 'SVHN'
-    target = 'MNIST'
+    batch_size = 16
+    source = 'amazon'
+    target = 'webcam'
 
     train_loader, val_loader = create_dataloaders(batch_size, source, target)
 
@@ -93,9 +94,10 @@ def main():
         epochs = 50
     elif source == 'SVHN' and target == 'MNIST':
         model = SVHN_MNIST().to(device)
-        epochs = 10
-    elif source == 'Amazon' and target == 'Webcam':
-        model = alexnet = models.alexnet(pretrained=True)
+        epochs = 50
+    elif source == 'amazon' and target == 'webcam':
+        model = Office(num_classes=31).to(device)
+        epochs = 500
     else:
         raise ValueError(f'Invalid target dataset: {target}')
     
