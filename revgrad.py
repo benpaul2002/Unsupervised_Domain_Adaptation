@@ -9,9 +9,9 @@ from torchvision.transforms import Compose, ToTensor
 from tqdm import tqdm
 
 import config
-from data import MNISTM
-from models import MNIST_MNISTM, MNIST_USPS
-from utils import GrayscaleToRgb
+from data import MNISTM, SVHN
+from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST
+from utils import GrayscaleToRgb, PadSize
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -47,14 +47,18 @@ class GradientReversal(torch.nn.Module):
 
 def main():
     batch_size = 64
-    epochs = 200
+    epochs = 10
     model_file = 'trained_models/source.pt'
-    target = 'USPS'
+    
+    source = 'SVHN'
+    target = 'MNIST'
 
     if target == 'MNIST-M':
         model = MNIST_MNISTM().to(device)
     elif target == 'USPS':
         model = MNIST_USPS().to(device)
+    elif source == 'SVHN' and target == 'MNIST':
+        model = SVHN_MNIST().to(device)
     else:
         raise ValueError(f'Invalid target dataset: {target}')
     
@@ -82,6 +86,16 @@ def main():
             nn.Linear(20, 1)
         ).to(device)
 
+    elif source == 'SVHN' and target == 'MNIST':
+        discriminator = nn.Sequential(
+            GradientReversal(),
+            nn.Linear(6272, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1)
+        ).to(device)
+
     else:
         raise ValueError(f'Invalid target dataset: {target}')
 
@@ -97,6 +111,9 @@ def main():
     elif target == 'USPS':
         source_dataset = MNIST(config.DATA_DIR/'mnist', train=True, download=True, transform=Compose([ToTensor()]))
         target_dataset = USPS(config.DATA_DIR/'usps', train=True, download=True, transform=Compose([ToTensor()]))
+    elif source == 'SVHN' and target == 'MNIST':
+        source_dataset = MNIST(config.DATA_DIR/'mnist', train=True, download=True, transform=Compose([PadSize(target_size=(32,32)), GrayscaleToRgb(), ToTensor()]))
+        target_dataset = SVHN()
     else:
         raise ValueError(f'Invalid target dataset: {target}')
 

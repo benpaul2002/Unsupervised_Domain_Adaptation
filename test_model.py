@@ -8,6 +8,8 @@ from tqdm import tqdm
 from data import MNISTM
 from models import MNIST_MNISTM, MNIST_USPS
 
+from utils import GrayscaleToRgb, PadSize
+
 import config
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -15,13 +17,18 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def main():
     batch_size = 256
     model_file = 'trained_models/revgrad.pt'
-    target = 'USPS'
+
+    source = 'MNIST'
+    target = 'SVHN'
 
     if target == 'MNIST-M':
         dataset = MNISTM(train=False)
     elif target == 'USPS':
         dataset = USPS(config.DATA_DIR/'usps', train=False, download=True,
                        transform=Compose([ToTensor()]))
+    elif source == 'SVHN' and target == 'MNIST':
+        dataset = MNIST(config.DATA_DIR/'mnist', train=False, download=True,
+                        transform=Compose([PadSize(target_size=(32,32)), GrayscaleToRgb(), ToTensor()]))
         
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
                             drop_last=False, num_workers=1, pin_memory=True)

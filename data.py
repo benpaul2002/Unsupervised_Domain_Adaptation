@@ -3,9 +3,10 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms
+import os
+from PIL import Image
 
 import config
-
 
 class BSDS500(Dataset):
 
@@ -54,3 +55,48 @@ class MNISTM(Dataset):
 
     def __len__(self):
         return len(self.mnist)
+    
+class SVHN(Dataset):
+    def __init__(self):
+        super(SVHN, self).__init__()
+        self.svhn = datasets.SVHN(config.DATA_DIR / 'svhn', split='train',
+                                   download=True, transform=transforms.ToTensor())
+        self.bsds = BSDS500()
+        self.rng = np.random.RandomState(42)
+
+    def __getitem__(self, index: int):
+        img, target = self.svhn[index]
+        return img, target
+
+    def __len__(self):
+        return len(self.svhn)
+
+class Office31Dataset(Dataset):
+    def _init_(self, root_dir, domain, transform=None):
+        """
+        Args:
+            root_dir (string): Directory with all the images.
+            domain (string): 'Amazon', 'webcam', or 'dslr'.
+            transform (callable, optional): Optional transform to be applied on a sample.
+        """
+        self.root_dir = os.path.join(root_dir, domain)
+        self.domain = domain
+        self.classes = os.listdir(self.root_dir)
+        self.transform = transform
+
+    def _len_(self):
+        return sum(len(os.listdir(os.path.join(self.root_dir, cls))) for cls in self.classes)
+
+    def _getitem_(self, idx):
+        class_idx = idx // len(self.classes)
+        class_name = self.classes[class_idx]
+        img_idx = idx % len(self.classes)
+
+        img_name = os.listdir(os.path.join(self.root_dir, class_name))[img_idx]
+        img_path = os.path.join(self.root_dir, class_name, img_name)
+        image = Image.open(img_path).convert('RGB')  # Ensure images are in RGB format
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, class_idx  # Assuming class index corresponds to class_name

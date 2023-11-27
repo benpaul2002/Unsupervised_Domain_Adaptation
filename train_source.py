@@ -4,15 +4,17 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision.datasets import MNIST
 from torchvision.transforms import Compose, ToTensor
+import torchvision.models as models
 from tqdm import tqdm
+from data import SVHN
 
 import config
-from models import MNIST_MNISTM, MNIST_USPS
-from utils import GrayscaleToRgb
+from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST
+from utils import GrayscaleToRgb, PadSize
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def create_dataloaders(batch_size, target):
+def create_dataloaders(batch_size, source, target):
     '''
     Create dataloaders for MNIST train and validation sets.
     train: 48,000 samples -> 80% of the dataset
@@ -26,6 +28,8 @@ def create_dataloaders(batch_size, target):
     elif target == 'USPS':
         dataset = MNIST(config.DATA_DIR/'mnist', train=True, download=True,
                         transform=Compose([ToTensor()]))
+    elif source == 'SVHN' and target == 'MNIST':
+        dataset = SVHN()
     else:
         raise ValueError(f'Invalid target dataset: {target}')
     
@@ -76,9 +80,10 @@ def do_epoch(model, dataloader, criterion, optim=None):
 
 def main():
     batch_size = 64
-    target = 'USPS'
+    source = 'SVHN'
+    target = 'MNIST'
 
-    train_loader, val_loader = create_dataloaders(batch_size, target)
+    train_loader, val_loader = create_dataloaders(batch_size, source, target)
 
     if target == 'MNIST-M':
         model = MNIST_MNISTM().to(device)
@@ -86,6 +91,11 @@ def main():
     elif target == 'USPS':
         model = MNIST_USPS().to(device)
         epochs = 50
+    elif source == 'SVHN' and target == 'MNIST':
+        model = SVHN_MNIST().to(device)
+        epochs = 10
+    elif source == 'Amazon' and target == 'Webcam':
+        model = alexnet = models.alexnet(pretrained=True)
     else:
         raise ValueError(f'Invalid target dataset: {target}')
     
