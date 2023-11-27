@@ -2,16 +2,18 @@ import cv2
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from torchvision import datasets, transforms
+from torchvision import datasets
+from torchvision.datasets import ImageFolder
+from torchvision.transforms import ToTensor, Resize
 import os
 from PIL import Image
+from pathlib import Path
 
-import config
+DATA_DIR = Path('/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data')
 
 class BSDS500(Dataset):
-
     def __init__(self):
-        image_folder = config.DATA_DIR / 'BSR/BSDS500/data/images'
+        image_folder = DATA_DIR / 'BSR/BSDS500/data/images'
         print(image_folder)
         self.image_files = list(map(str, image_folder.glob('*/*.jpg')))
 
@@ -23,20 +25,18 @@ class BSDS500(Dataset):
     def __len__(self):
         return len(self.image_files)
 
-
 class MNISTM(Dataset):
 
     def __init__(self, train=True):
         super(MNISTM, self).__init__()
-        self.mnist = datasets.MNIST(config.DATA_DIR / 'mnist', train=train,
+        self.mnist = datasets.MNIST(DATA_DIR / 'mnist', train=train,
                                     download=True)
         self.bsds = BSDS500()
-        # Fix RNG so the same images are used for blending
         self.rng = np.random.RandomState(42)
 
     def __getitem__(self, i):
         digit, label = self.mnist[i]
-        digit = transforms.ToTensor()(digit)
+        digit = ToTensor()(digit)
         bsds_image = self._random_bsds_image()
         patch = self._random_patch(bsds_image)
         patch = patch.float() / 255
@@ -59,8 +59,8 @@ class MNISTM(Dataset):
 class SVHN(Dataset):
     def __init__(self):
         super(SVHN, self).__init__()
-        self.svhn = datasets.SVHN(config.DATA_DIR / 'svhn', split='train',
-                                   download=True, transform=transforms.ToTensor())
+        self.svhn = datasets.SVHN(DATA_DIR / 'svhn', split='train',
+                                   download=True, transform=ToTensor())
         self.bsds = BSDS500()
         self.rng = np.random.RandomState(42)
 
@@ -71,32 +71,29 @@ class SVHN(Dataset):
     def __len__(self):
         return len(self.svhn)
 
-class Office31Dataset(Dataset):
-    def _init_(self, root_dir, domain, transform=None):
-        """
-        Args:
-            root_dir (string): Directory with all the images.
-            domain (string): 'Amazon', 'webcam', or 'dslr'.
-            transform (callable, optional): Optional transform to be applied on a sample.
-        """
-        self.root_dir = os.path.join(root_dir, domain)
-        self.domain = domain
-        self.classes = os.listdir(self.root_dir)
-        self.transform = transform
+# class Office31(Dataset):
+#     def __init__(self, domain='amazon'):
+#         super(Office31, self).__init__()
+#         self.office31 = ImageFolder(DATA_DIR/'office31'/domain, transform=ToTensor())
+#         self.rng = np.random.RandomState(42)
 
-    def _len_(self):
-        return sum(len(os.listdir(os.path.join(self.root_dir, cls))) for cls in self.classes)
+#     def __getitem__(self, index: int):
+#         img, target = self.office31[index]
+#         return img, target
 
-    def _getitem_(self, idx):
-        class_idx = idx // len(self.classes)
-        class_name = self.classes[class_idx]
-        img_idx = idx % len(self.classes)
+#     def __len__(self):
+#         return len(self.office31)
 
-        img_name = os.listdir(os.path.join(self.root_dir, class_name))[img_idx]
-        img_path = os.path.join(self.root_dir, class_name, img_name)
-        image = Image.open(img_path).convert('RGB')  # Ensure images are in RGB format
+class Office31(Dataset):
+    def __init__(self, domain='amazon', image_size=(128, 128)):
+        super(Office31, self).__init__()
+        self.office31 = ImageFolder(DATA_DIR/'office31'/domain, transform=ToTensor())
+        self.resize_transform = Resize(image_size)
 
-        if self.transform:
-            image = self.transform(image)
+    def __getitem__(self, index: int):
+        img, target = self.office31[index]
+        img = self.resize_transform(img)
+        return img, target
 
-        return image, class_idx  # Assuming class index corresponds to class_name
+    def __len__(self):
+        return len(self.office31)
