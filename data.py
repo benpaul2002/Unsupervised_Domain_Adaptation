@@ -1,3 +1,5 @@
+# This file contains the classes for all the datasets (for loading).
+
 import cv2
 import numpy as np
 import torch

@@ -6,7 +6,7 @@ from torchvision.transforms import Compose, ToTensor
 from tqdm import tqdm
 from data import MNIST_Dataset, MNISTM_Dataset, USPS_Dataset, SVHN_Dataset, Office31_Dataset, ImageNet_Dataset, Caltech_Dataset, DomainNet_Dataset, ConcatenatedDataset
 
-from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST, Office, ImageNet, MNIST_MNISTM_SVHN
+from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST, Office, ImageNet, MNIST_MNISTM_SVHN, DomainNet
 from utils import GrayscaleToRgb, PadSize
 from revgrad import get_discriminator
 import torch.nn.functional as F
@@ -23,12 +23,10 @@ adaptation_combinations = {
   "Webcam": ["DSLR"],
   "DSLR": ["Amazon"],
   "Quickdraw": ["Clipart"],
+  "Sketch": ["Painting"],
+  "Painting": ["Sketch"],
   "MNIST_MNIST-M": ["SVHN"],
 }
-
-# TODO: USPS -> MNIST
-# TODO: Multi source
-
 
 # Train model on MNIST
 # Do Domain adaptation from MNIST to MNIST-M
@@ -114,15 +112,20 @@ def get_dataset(source, target):
     target_dataset = Office31_Dataset(domain=target)
     batch_size = 64
 
-  elif source == "ImageNet" and target == "Caltech":
-    source_dataset = ImageNet_Dataset()
-    target_dataset = Caltech_Dataset()
-    batch_size = 64
-
   elif source == "Quickdraw" and target == "Clipart":
     source_dataset =  DomainNet_Dataset(domain=source)
     target_dataset = DomainNet_Dataset(domain=target)
-    batch_size = 16
+    batch_size = 4
+
+  elif source == "Sketch" and target == "Painting":
+    source_dataset =  DomainNet_Dataset(domain=source)
+    target_dataset = DomainNet_Dataset(domain=target)
+    batch_size = 4
+
+  elif source == "Painting" and target == "Sketch":
+    source_dataset =  DomainNet_Dataset(domain=source)
+    target_dataset = DomainNet_Dataset(domain=target)
+    batch_size = 4
 
   elif source == "MNIST_MNIST-M" and target == "SVHN":
     source_dataset = MNIST_Dataset(grayscaleToRgb=True, padSize=True, image_size=(32, 32))
@@ -189,11 +192,14 @@ def get_model(source_dataset, target_dataset):
   elif source_dataset == "DSLR" and target_dataset == "Amazon":
     model = Office().to(device)
 
-  elif source_dataset == "ImageNet" and target_dataset == "Caltech":
-    model = ImageNet().to(device)
-
   elif source_dataset == "Quickdraw" and target_dataset == "Clipart":
-    model = Office(num_classes=34).to(device)
+    model = DomainNet(num_classes=10).to(device)
+
+  elif source_dataset == "Sketch" and target_dataset == "Painting":
+    model = DomainNet(num_classes=10).to(device)  
+
+  elif source_dataset == "Painting" and target_dataset == "Sketch":
+    model = DomainNet(num_classes=10).to(device)  
 
   elif source_dataset == "MNIST_MNIST-M" and target_dataset == "SVHN":
     model = MNIST_MNISTM_SVHN().to(device)

@@ -103,9 +103,9 @@ class SVHN_MNIST(nn.Module):
         logits = self.classifier(features)
         return logits
     
-class Office(nn.Module):
+class DomainNet(nn.Module):
     def __init__(self, num_classes=31):
-        super(Office, self).__init__()
+        super(DomainNet, self).__init__()
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
@@ -130,6 +130,31 @@ class Office(nn.Module):
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
             nn.Linear(4096, num_classes),
+        )
+
+    def forward(self, x):
+        features = self.feature_extractor(x)
+        features = features.view(x.shape[0], -1)
+        logits = self.classifier(features)
+        return logits
+
+class Office(nn.Module):
+    def __init__(self):
+        super(Office, self).__init__()
+        self.feature_extractor = nn.Sequential(
+            nn.Conv2d(3, 10, kernel_size=5),        # Assuming input images are 224x224 pixels
+            nn.AdaptiveAvgPool2d((55, 55)),         # Downsample to 55x55
+            nn.ReLU(),
+            nn.Conv2d(10, 20, kernel_size=5),
+            nn.MaxPool2d(2),                        # Downsample to 25x25
+            nn.Dropout2d(),
+        )
+        
+        self.classifier = nn.Sequential(
+            nn.Linear(20*25*25, 50),                # Flatten the tensor
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(50, 31),                      # Assuming there are 31 classes in the Office31 dataset
         )
 
     def forward(self, x):
