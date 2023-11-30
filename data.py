@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import datasets
 from torchvision.datasets import ImageFolder
-from torchvision.transforms import Compose, ToTensor, Resize
+from torchvision.transforms import Compose, ToTensor, Resize, Normalize
 from torchvision.datasets import MNIST, USPS, SVHN
 import os
 from PIL import Image
@@ -107,19 +107,17 @@ class SVHN_Dataset(Dataset):
         return len(self.svhn)
 
 class Office31_Dataset(Dataset):
-    def __init__(self, domain='Amazon', image_size=(128, 128)):
+    def __init__(self, domain='Amazon', image_size=(224, 224)):
         super(Office31_Dataset, self).__init__()
-        self.office31 = ImageFolder(DATA_DIR/'office31'/domain, transform=ToTensor())
-        # self.resize_transform = Resize(image_size)
+        self.office31 = ImageFolder(DATA_DIR/'office31'/domain, transform=Compose([Resize(image_size), ToTensor(), Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]))
 
     def __getitem__(self, index: int):
         img, target = self.office31[index]
-        # img = self.resize_transform(img)
         return img, target
 
     def __len__(self):
         return len(self.office31)
-    
+
 class ImageNetDataset(Dataset):
     def _init_(self, train=True):
         super(ImageNetDataset, self)._init_()

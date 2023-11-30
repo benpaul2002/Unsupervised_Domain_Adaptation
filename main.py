@@ -72,6 +72,16 @@ def get_dataset(source, target):
     target_dataset = Office31_Dataset(domain=target)
     batch_size = 16
 
+  elif source == "Webcam" and target == "DSLR":
+    source_dataset = Office31_Dataset(domain=source)
+    target_dataset = Office31_Dataset(domain=target)
+    batch_size = 16
+
+  elif source == "DSLR" and target == "Amazon":
+    source_dataset = Office31_Dataset(domain=source)
+    target_dataset = Office31_Dataset(domain=target)
+    batch_size = 16
+
   else:
     print("Invalid combination of datasets")
     exit()
@@ -114,6 +124,12 @@ def get_model(source_dataset, target_dataset):
     model = SVHN_MNIST().to(device)
 
   elif source_dataset == "Amazon" and target_dataset == "Webcam":
+    model = Office().to(device)
+
+  elif source_dataset == "Webcam" and target_dataset == "DSLR":
+    model = Office().to(device)
+
+  elif source_dataset == "DSLR" and target_dataset == "Amazon":
     model = Office().to(device)
 
   else:
@@ -255,7 +271,7 @@ def main():
 
   print("Adaptation from", source_dataset, "to", target_dataset)
 
-  epochs = 100
+  epochs = 10
 
   train_loader, val_loader, batch_size = get_train_data(source_dataset, target_dataset)
   model = get_model(source_dataset, target_dataset)
