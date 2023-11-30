@@ -118,9 +118,9 @@ class Office31_Dataset(Dataset):
     def __len__(self):
         return len(self.office31)
 
-class ImageNetDataset(Dataset):
+class ImageNet_Dataset(Dataset):
     def _init_(self, train=True):
-        super(ImageNetDataset, self)._init_()
+        super(ImageNet_Dataset, self)._init_()
         self.imagenet = datasets.ImageNet(DATA_DIR / 'imagenet', split='train' if train else 'test',
                                     download=True)
         
@@ -133,7 +133,7 @@ class ImageNetDataset(Dataset):
     def _len_(self):
         return len(self.imagenet)
     
-class Caltech256Dataset(Dataset):
+class Caltech_Dataset(Dataset):
     def __init__(self, root_dir, transform=None):
         self.root_dir = root_dir
         self.transform = transform
@@ -163,3 +163,4 @@ class Caltech256Dataset(Dataset):
             image = self.transform(image)
 
         return image, label
+        

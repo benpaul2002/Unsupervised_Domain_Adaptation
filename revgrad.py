@@ -3,10 +3,9 @@ from torch import nn
 import torch.nn.functional as F
 from torch.autograd import Function
 from torch.utils.data import DataLoader
-print("----------------------------------------")
 from pathlib import Path
 
-DATA_DIR = Path("/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data")
+DATA_DIR = Path("/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try3/data")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
