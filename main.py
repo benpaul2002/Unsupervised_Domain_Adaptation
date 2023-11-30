@@ -4,9 +4,9 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision.transforms import Compose, ToTensor
 from tqdm import tqdm
-from data import MNIST_Dataset, MNISTM_Dataset, USPS_Dataset, SVHN_Dataset, Office31_Dataset
+from data import MNIST_Dataset, MNISTM_Dataset, USPS_Dataset, SVHN_Dataset, Office31_Dataset, ImageNet_Dataset, Caltech_Dataset
 
-from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST, Office
+from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST, Office, ImageNet
 from utils import GrayscaleToRgb, PadSize
 from revgrad import get_discriminator
 import torch.nn.functional as F
@@ -27,9 +27,6 @@ adaptation_combinations = {
   "MNIST_MNIST-M": ["SVHN"]
 }
 
-# TODO: Amazon -> Webcam
-# TODO: Webcam -> DSLR
-# TODO: DSLR -> Amazon
 # TODO: ImageNet -> Caltech
 # TODO: Caltech -> ImageNet
 # TODO: DomainNet1 -> DomainNet2
@@ -75,12 +72,17 @@ def get_dataset(source, target):
   elif source == "Webcam" and target == "DSLR":
     source_dataset = Office31_Dataset(domain=source)
     target_dataset = Office31_Dataset(domain=target)
-    batch_size = 16
+    batch_size = 64
 
   elif source == "DSLR" and target == "Amazon":
     source_dataset = Office31_Dataset(domain=source)
     target_dataset = Office31_Dataset(domain=target)
-    batch_size = 16
+    batch_size = 64
+
+  elif source == "ImageNet" and target == "Caltech":
+    source_dataset = ImageNet_Dataset()
+    target_dataset = Caltech_Dataset()
+    batch_size = 64
 
   else:
     print("Invalid combination of datasets")
@@ -131,6 +133,9 @@ def get_model(source_dataset, target_dataset):
 
   elif source_dataset == "DSLR" and target_dataset == "Amazon":
     model = Office().to(device)
+
+  elif source_dataset == "ImageNet" and target_dataset == "Caltech":
+    model = ImageNet().to(device)
 
   else:
     print("Invalid combination of datasets")
@@ -271,7 +276,7 @@ def main():
 
   print("Adaptation from", source_dataset, "to", target_dataset)
 
-  epochs = 10
+  epochs = 2
 
   train_loader, val_loader, batch_size = get_train_data(source_dataset, target_dataset)
   model = get_model(source_dataset, target_dataset)
