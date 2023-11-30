@@ -53,6 +53,17 @@ def get_discriminator(source, target):
             nn.Sigmoid()
         ).to(device)
 
+    elif source == "MNIST" and target == "SVHN":
+        discriminator = nn.Sequential(
+            GradientReversal(),
+            nn.Linear(6272, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1),
+            nn.Sigmoid()
+        ).to(device)
+
     elif source == "SVHN" and target == "MNIST":
         discriminator = nn.Sequential(
             GradientReversal(),
@@ -86,10 +97,21 @@ def get_discriminator(source, target):
             nn.Sigmoid()
         ).to(device)
 
+    elif source == "Quickdraw" and target == "Clipart":
+        discriminator = nn.Sequential(
+            GradientReversal(),
+            nn.Linear(9216, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1),
+            nn.Sigmoid()
+        ).to(device)
+
     elif source == "MNIST_MNIST-M" and target == "SVHN":
         discriminator = nn.Sequential(
             GradientReversal(),
-            nn.Linear(320, 50),
+            nn.Linear(500, 50),
             nn.ReLU(),
             nn.Linear(50, 20),
             nn.ReLU(),
