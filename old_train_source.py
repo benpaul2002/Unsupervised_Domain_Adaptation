@@ -7,20 +7,16 @@ from torchvision.transforms import Compose, ToTensor
 from tqdm import tqdm
 from data import SVHN, Office31
 
-import config
 from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST, Office
 from utils import GrayscaleToRgb, PadSize
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def create_dataloaders(batch_size, source, target):
-    '''
-    Create dataloaders for MNIST train and validation sets.
-    train: 48,000 samples -> 80% of the dataset
-    val: 12,000 samples -> 20% of the dataset
-    Since this is MNIST -> MNIST-M and our neural net expects 3 channels, 
-    we use GrayscaleToRgb transform.
-    '''
+    # Create dataloaders for MNIST train and validation sets.
+    # train 80% of the dataset
+    # val 20% of the dataset
+    
     if target == 'MNIST-M':
         dataset = MNIST('/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data/mnist', train=True, download=True,
                         transform=Compose([GrayscaleToRgb(), ToTensor()]))
@@ -31,6 +27,12 @@ def create_dataloaders(batch_size, source, target):
         dataset = SVHN()
     elif source == 'amazon' and target == 'webcam':
         dataset = Office31(domain=source)
+    elif source == 'webcam' and target == 'dslr':
+        dataset = Office31(domain=source)
+    elif source == 'MNIST_MNIST-M' and target == 'SVHN':
+        # dataset = MNIST('/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data/mnist', train=True, download=True,
+        #                 transform=Compose([PadSize(target_size=(32,32)), GrayscaleToRgb(), ToTensor()]))
+        dataset = SVHN()
     else:
         raise ValueError(f'Invalid target dataset: {target}')
     
@@ -47,19 +49,16 @@ def create_dataloaders(batch_size, source, target):
     return train_loader, val_loader
 
 def do_epoch(model, dataloader, criterion, optim=None):
-    '''
-    Train or evaluate model for one epoch.
-    Iterate over all batches in dataloader.
-    criterion is loss function defined in main
-    during training, optim is not None, so we do backpropagation
-    y_pred is 64x10 tensor
-    y_pred.max(1) returns 2 tensors of size 64
-    y_pred.max(1)[0] is the max value for each of the 64 samples -> represents the confidence of the prediction
-    y_pred.max(1)[1] is the index of the max value for each of the 64 samples -> represents the predicted class
-    compare y_pred.max(1)[1] with y_true -> returns a tensor of size 64 with 1s and 0s
-    .float() converts 1s and 0s to 1.0s and 0.0s
-    .mean() computes the mean of the tensor -> accuracy
-    '''
+    # Train or evaluate model for one epoch.
+    # Iterate over all batches in dataloader.
+    # criterion is loss function defined in main
+    # during training, optim is not None, so we do backpropagation
+    # y_pred is 64x10 tensor
+    # y_pred.max(1) returns 2 tensors of size 64
+    # y_pred.max(1)[0] is the max value for each of the 64 samples -> represents the confidence of the prediction
+    # y_pred.max(1)[1] is the index of the max value for each of the 64 samples -> represents the predicted class
+    # compare y_pred.max(1)[1] with y_true -> returns a tensor of size 64 with 1s and 0s
+
     total_loss = 0
     total_accuracy = 0
     for x, y_true in tqdm(dataloader, leave=False):
@@ -80,9 +79,9 @@ def do_epoch(model, dataloader, criterion, optim=None):
     return mean_loss, mean_accuracy
 
 def main():
-    batch_size = 16
-    source = 'amazon'
-    target = 'webcam'
+    batch_size = 256
+    source = 'MNIST'
+    target = 'MNIST-M'
 
     train_loader, val_loader = create_dataloaders(batch_size, source, target)
 
@@ -98,6 +97,13 @@ def main():
     elif source == 'amazon' and target == 'webcam':
         model = Office(num_classes=31).to(device)
         epochs = 500
+    elif source == 'webcam' and target == 'dslr':
+        model = Office(num_classes=31).to(device)
+        epochs = 500
+    elif source == 'MNIST_MNIST-M' and target == 'SVHN':
+        model = MNIST_MNISTM().to(device)
+        model.load_state_dict(torch.load('trained_models/revgrad.pt'))
+        epochs = 50
     else:
         raise ValueError(f'Invalid target dataset: {target}')
     
@@ -125,3 +131,5 @@ def main():
         lr_schedule.step(val_loss)
 
 main()
+
+# multiple sources

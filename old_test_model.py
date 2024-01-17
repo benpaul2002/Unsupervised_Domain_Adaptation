@@ -6,28 +6,26 @@ from torchvision.transforms import Compose, ToTensor
 from tqdm import tqdm
 
 from data import MNISTM
-from models import MNIST_MNISTM, MNIST_USPS
+from models import MNIST_MNISTM, MNIST_USPS, SVHN_MNIST
 
 from utils import GrayscaleToRgb, PadSize
-
-import config
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main():
-    batch_size = 256
+    batch_size = 128
     model_file = 'trained_models/revgrad.pt'
 
     source = 'MNIST'
-    target = 'SVHN'
+    target = 'MNIST-M'
 
     if target == 'MNIST-M':
         dataset = MNISTM(train=False)
     elif target == 'USPS':
-        dataset = USPS(config.DATA_DIR/'usps', train=False, download=True,
+        dataset = USPS('/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data/usps', train=False, download=True,
                        transform=Compose([ToTensor()]))
     elif source == 'SVHN' and target == 'MNIST':
-        dataset = MNIST(config.DATA_DIR/'mnist', train=False, download=True,
+        dataset = MNIST('/home/ben/Documents/Year_4/Sem_7/SMAI/Project/Code/Try1/data/mnist', train=False, download=True,
                         transform=Compose([PadSize(target_size=(32,32)), GrayscaleToRgb(), ToTensor()]))
         
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
@@ -37,6 +35,8 @@ def main():
         model = MNIST_MNISTM().to(device)
     elif target == 'USPS':
         model = MNIST_USPS().to(device)
+    elif source == 'SVHN' and target == 'MNIST':
+        model = SVHN_MNIST().to(device)
     model.load_state_dict(torch.load(model_file))
     model.eval()
 
