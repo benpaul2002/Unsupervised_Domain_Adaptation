@@ -1,3 +1,5 @@
+# Unsupervised Domain Adaptation
+
 This is our project for the Statistical Methods in AI course (Monsoon 2023). The project involves doing domain adaptation from a source dataset to a target dataset by introducing a Gradient Reversal Layer.
 
 We adapted the following pairs - 
